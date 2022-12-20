@@ -2,19 +2,22 @@ import tkinter as tk
 import mysql.connector
 from tkinter import ttk
 from tkinter import *
+import os
+
+
+db_password=os.environ['mysql_db_password']
+
+db = mysql.connector.connect(host="localhost",
+                                 user="root",
+                                 password=db_password,
+                                 db="Neam")
+cursor = db.cursor()
 
 def projectSubmit():
     prname = project_name.get()
     prnumber = project_number.get()
 
-    addNewProject(prname, prnumber)
 
-def addNewProject(prname, prnumber):
-    db = mysql.connector.connect(host="localhost",
-                                 user="root",
-                                 password="1234",
-                                 db="Neam")
-    cursor = db.cursor()
     sql = "INSERT INTO projects (project_name, project_number) VALUES (%s, %s)"
     val = (prname, prnumber)
 
@@ -26,11 +29,6 @@ def viewProjects():
     for i in tree.get_children():
         tree.delete(i)
 
-    db = mysql.connector.connect(host="localhost",
-                                 user="root",
-                                 password="1234",
-                                 db="Neam")
-    cursor = db.cursor()
     sql = "SELECT * FROM projects"
 
     cursor.execute(sql)
