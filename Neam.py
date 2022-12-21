@@ -54,10 +54,58 @@ root.title("NeAM Projects")
 def get_selection():
     selected_project = tree.focus()
     selected_project_details = tree.item(selected_project)
-    print(selected_project_details)
+
     part_window = Toplevel(root)
     part_window.title = ("View projects")
     part_window.geometry = ("300x300")
+
+    tree_parts = ttk.Treeview(part_window, column=("c1", "c2", "c3", "c4","c5","c6", "c7", "c8"), show='headings')
+
+    tree_parts.column("#1", anchor=tk.CENTER)
+    tree_parts.heading("#1", text="Project_ID")
+
+    tree_parts.column("#2", anchor=tk.CENTER)
+    tree_parts.heading("#2", text="Part name")
+
+    tree_parts.column("#3", anchor=tk.CENTER)
+    tree_parts.heading("#3", text="Part number")
+
+    tree_parts.column("#4", anchor=tk.CENTER)
+    tree_parts.heading("#4", text="Qty")
+
+    tree_parts.column("#5", anchor=tk.CENTER)
+    tree_parts.heading("#5", text="Manufacturer")
+
+    tree_parts.column("#6", anchor=tk.CENTER)
+    tree_parts.heading("#6", text="Part type")
+
+    tree_parts.column("#7", anchor=tk.CENTER)
+    tree_parts.heading("#7", text="Technology")
+
+    tree_parts.column("#8", anchor=tk.CENTER)
+    tree_parts.heading("#8", text="Status")
+
+    tree_parts.pack()
+
+    def viewParts():
+        for i in tree_parts.get_children():
+            tree_parts.delete(i)
+        db = mysql.connector.connect(host="localhost",
+                                     user="root",
+                                     password=db_password,
+                                     db="Neam")
+        cursor = db.cursor()
+        sql = "SELECT * FROM parts WHERE project_id = %s"
+        id = selected_project_details["values"][0]
+        cursor.execute(sql, (id,))
+        myresult = cursor.fetchall()
+        for row in myresult:
+            print(row)
+
+            tree_parts.insert("", tk.END, values=row)
+        db.close()
+    viewParts()
+    part_window.mainloop()
 
 lblfrstrow = tk.Label(root, text="Project name -", )
 lblfrstrow.place(x=50, y=20)
