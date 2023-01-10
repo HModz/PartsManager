@@ -2,6 +2,7 @@ from tkinter import *
 import os
 import mysql.connector
 from tkinter import messagebox
+from customtkinter import *
 
 DB_PASSWORD=os.environ['mysql_db_password']
 
@@ -36,21 +37,21 @@ def add_project():
 
 
 
-window = Tk()
+window = CTk()
 window.title("Neam")
 window.config(padx=50, pady=50)
 
-project_nmbr_lbl = Label(text="Project number: ")
+project_nmbr_lbl = CTkLabel(master=window, text="Project number: ")
 project_nmbr_lbl.grid(column=0, row=0)
-project_nmbr_entr = Entry()
+project_nmbr_entr = CTkEntry(master=window)
 project_nmbr_entr.grid(column=1, row=0)
 
-project_name_lbl = Label(text="Project name: ")
+project_name_lbl = CTkLabel(master=window, text="Project name: ")
 project_name_lbl.grid(column=0, row=1)
-project_name_entr = Entry()
+project_name_entr = CTkEntry(master=window)
 project_name_entr.grid(column=1, row=1)
 
-add_project_btn = Button(text="Add project", command=add_project)
+add_project_btn = CTkButton(master=window, text="Add project", command=add_project)
 add_project_btn.grid(column=1, row=3)
 
 window.mainloop()
