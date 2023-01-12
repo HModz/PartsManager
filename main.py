@@ -1,10 +1,14 @@
-from tkinter import *
-import os
-import mysql.connector
+import tkinter as tk
 from tkinter import messagebox
-from customtkinter import *
+from tkinter import ttk
 
-DB_PASSWORD=os.environ['mysql_db_password']
+import mysql.connector
+from customtkinter import *
+from customtkinter import CTk
+
+
+DB_PASSWORD = os.environ['mysql_db_password']
+
 
 def connect_to_db():
     db = mysql.connector.connect(host="localhost",
@@ -12,6 +16,11 @@ def connect_to_db():
                                  password=DB_PASSWORD,
                                  db="Neam")
     return db
+
+def get_selected_project():
+    selected_project = tree.focus()
+    selected_project_details = tree.item(selected_project)
+    return selected_project_details
 
 def add_project():
     project_number = project_nmbr_entr.get()
@@ -32,10 +41,64 @@ def add_project():
             cursor.execute(sql, val)
             db.commit()
             db.close()
+            show_projects()
         else:
             pass
 
 
+def show_projects():
+    for i in tree.get_children():
+        tree.delete(i)
+    db = connect_to_db()
+    cursor = db.cursor()
+    sql = "SELECT * FROM projects"
+
+    cursor.execute(sql)
+    projects = cursor.fetchall()
+    for row in projects:
+        tree.insert("", tk.END, values=row)
+    db.close()
+
+
+def delete_project():
+    selected_project = get_selected_project()
+    id = selected_project["values"][0]
+    db = connect_to_db()
+    cursor = db.cursor()
+
+    sql = f"DELETE FROM projects WHERE ID = {id}"
+
+    cursor.execute(sql)
+    db.commit()
+    db.close()
+    show_projects()
+
+def edit_project_window():
+    selected_project = get_selected_project()
+    if selected_project["values"] == "":
+        messagebox.showerror(title="Error", message="PLEASE SELECT PROJECT TO EDIT!")
+    else:
+        edit_window = CTkToplevel(window)
+        edit_window.title("Edit project")
+
+
+        def edit_project():
+            pass
+
+        project_nmbr_lbl = CTkLabel(master=edit_window, text="Project number: ")
+        project_nmbr_lbl.grid(column=0, row=0)
+        project_nmbr_entr = CTkEntry(master=edit_window)
+        project_nmbr_entr.insert(0, selected_project["values"][1])
+        project_nmbr_entr.grid(column=1, row=0)
+
+        project_name_lbl = CTkLabel(master=edit_window, text="Project name: ")
+        project_name_lbl.grid(column=0, row=1)
+        project_name_entr = CTkEntry(master=edit_window)
+        project_name_entr.insert(0, selected_project["values"][2])
+        project_name_entr.grid(column=1, row=1)
+
+        edit_window.focus_set()
+        edit_window.grab_set()
 
 window = CTk()
 window.title("Neam")
@@ -53,5 +116,23 @@ project_name_entr.grid(column=1, row=1)
 
 add_project_btn = CTkButton(master=window, text="Add project", command=add_project)
 add_project_btn.grid(column=1, row=3)
+
+show_projects_btn = CTkButton(master=window, text="Show projects", command=show_projects)
+show_projects_btn.grid(column=0, row=4)
+
+delete_project_btn = CTkButton(master=window, text="Delete project", command=delete_project)
+delete_project_btn.grid(column=2, row=4)
+
+edit_project_btn = CTkButton(master=window, text="Edit project", command=edit_project_window)
+edit_project_btn.grid(column=1, row=4)
+
+tree = ttk.Treeview(window, column=("c1", "c2", "c3"), show='headings')
+tree.column("#1", anchor=tk.CENTER)
+tree.heading("#1", text="ID")
+tree.column("#2", anchor=tk.CENTER)
+tree.heading("#2", text="Project number")
+tree.column("#3", anchor=tk.CENTER)
+tree.heading("#3", text="Project name")
+tree.grid(column=0, row=5, columnspan=3)
 
 window.mainloop()
