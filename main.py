@@ -6,7 +6,6 @@ import mysql.connector
 from customtkinter import *
 from customtkinter import CTk
 
-
 DB_PASSWORD = os.environ['mysql_db_password']
 
 
@@ -17,10 +16,12 @@ def connect_to_db():
                                  db="Neam")
     return db
 
+
 def get_selected_project():
     selected_project = tree.focus()
     selected_project_details = tree.item(selected_project)
     return selected_project_details
+
 
 def add_project():
     project_number = project_nmbr_entr.get()
@@ -63,15 +64,18 @@ def show_projects():
 def delete_project():
     selected_project = get_selected_project()
     id = selected_project["values"][0]
-    db = connect_to_db()
-    cursor = db.cursor()
+    yes = messagebox.askokcancel(title="Warning", message="Are you sure to delete this project?")
+    if yes:
+        db = connect_to_db()
+        cursor = db.cursor()
 
-    sql = f"DELETE FROM projects WHERE ID = {id}"
+        sql = f"DELETE FROM projects WHERE ID = {id}"
 
-    cursor.execute(sql)
-    db.commit()
-    db.close()
-    show_projects()
+        cursor.execute(sql)
+        db.commit()
+        db.close()
+        show_projects()
+
 
 def edit_project_window():
     selected_project = get_selected_project()
@@ -80,10 +84,25 @@ def edit_project_window():
     else:
         edit_window = CTkToplevel(window)
         edit_window.title("Edit project")
-
+        edit_window.config(pady=20, padx=20)
 
         def edit_project():
-            pass
+            id = selected_project["values"][0]
+            project_number = project_nmbr_entr.get()
+            project_name = project_name_entr.get()
+            yes = messagebox.askokcancel(title="Warning", message="Are you sure to proceed?")
+            if yes:
+                db = connect_to_db()
+                cursor = db.cursor()
+                sql = f"UPDATE projects SET project_number = %s, project_name = %s WHERE id = {id}"
+                val = (project_name, project_number)
+                cursor.execute(sql, val)
+                db.commit()
+                db.close()
+                show_projects()
+
+        def cancel_edit():
+            edit_window.destroy()
 
         project_nmbr_lbl = CTkLabel(master=edit_window, text="Project number: ")
         project_nmbr_lbl.grid(column=0, row=0)
@@ -97,12 +116,38 @@ def edit_project_window():
         project_name_entr.insert(0, selected_project["values"][2])
         project_name_entr.grid(column=1, row=1)
 
+        apply_btn = CTkButton(master=edit_window, text="Apply", command=edit_project)
+        apply_btn.grid(column=0, row=2, pady=20, padx=20)
+
+        cancel_btn = CTkButton(master=edit_window, text="Cancel", command=cancel_edit)
+        cancel_btn.grid(column=1, row=2, pady=20, padx=20)
+
         edit_window.focus_set()
         edit_window.grab_set()
+
+        edit_window.mainloop()
+
+
+def login_page():
+    login_window = CTkToplevel(window)
+    login_window.title("Login")
+    login_window.config(padx=20, pady=20)
+
+    user_lbl = CTkLabel(master=login_window, text="User: ")
+    user_lbl.grid(column=0, row=0)
+    password_lbl = CTkLabel(master=login_window, text="Password: ")
+    password_lbl.grid(column=0, row=1)
+
+    login_window.focus_set()
+    login_window.grab_set()
+
+    #login_window.mainloop()
 
 window = CTk()
 window.title("Neam")
 window.config(padx=50, pady=50)
+
+#login_page()
 
 project_nmbr_lbl = CTkLabel(master=window, text="Project number: ")
 project_nmbr_lbl.grid(column=0, row=0)
@@ -114,10 +159,10 @@ project_name_lbl.grid(column=0, row=1)
 project_name_entr = CTkEntry(master=window)
 project_name_entr.grid(column=1, row=1)
 
-add_project_btn = CTkButton(master=window, text="Add project", command=add_project)
-add_project_btn.grid(column=1, row=3)
+add_project_btn = CTkButton(master=window, text="Add new project", command=add_project)
+add_project_btn.grid(column=1, row=3, pady=10)
 
-show_projects_btn = CTkButton(master=window, text="Show projects", command=show_projects)
+show_projects_btn = CTkButton(master=window, text="Refresh list", command=show_projects)
 show_projects_btn.grid(column=0, row=4)
 
 delete_project_btn = CTkButton(master=window, text="Delete project", command=delete_project)
