@@ -99,6 +99,7 @@ def edit_project_window():
                 cursor.execute(sql, val)
                 db.commit()
                 db.close()
+                edit_window.destroy()
                 show_projects()
 
         def cancel_edit():
@@ -143,6 +144,56 @@ def login_page():
 
     #login_window.mainloop()
 
+def select_project(event):
+    selected_project = get_selected_project()
+    id = selected_project["values"][0]
+    project_name = selected_project["values"][1]
+
+
+
+
+
+    parts_window = CTkToplevel()
+    parts_window.title(f"{project_name}")
+
+    parts_tree = ttk.Treeview(parts_window, column=("c1", "c2", "c3", "c4", "c5", "c6", "c7"), show='headings')
+    parts_tree.column("#1", anchor=tk.CENTER)
+    parts_tree.heading("#1", text="Part name")
+
+    parts_tree.column("#2", anchor=tk.CENTER)
+    parts_tree.heading("#2", text="Part number")
+
+    parts_tree.column("#3", anchor=tk.CENTER)
+    parts_tree.heading("#3", text="Qty")
+
+    parts_tree.column("#4", anchor=tk.CENTER)
+    parts_tree.heading("#4", text="Manufacturer")
+
+    parts_tree.column("#5", anchor=tk.CENTER)
+    parts_tree.heading("#5", text="Part type")
+
+    parts_tree.column("#6", anchor=tk.CENTER)
+    parts_tree.heading("#6", text="Technology")
+
+    parts_tree.column("#7", anchor=tk.CENTER)
+    parts_tree.heading("#7", text="Status")
+    parts_tree.grid(column=0, row=0)
+    parts_tree.focus_set()
+    parts_tree.grab_set()
+    for i in parts_tree.get_children():
+        parts_tree.delete(i)
+    db = connect_to_db()
+    cursor = db.cursor()
+    sql = "SELECT part_name, part_number, qty, manufacturer, part_type, technology, status FROM parts WHERE project_id = %s"
+
+    cursor.execute(sql, (id,))
+    parts = cursor.fetchall()
+    for row in parts:
+        parts_tree.insert("", tk.END, values=row)
+    db.close()
+    parts_tree.mainloop()
+
+
 window = CTk()
 window.title("Neam")
 window.config(padx=50, pady=50)
@@ -179,5 +230,6 @@ tree.heading("#2", text="Project number")
 tree.column("#3", anchor=tk.CENTER)
 tree.heading("#3", text="Project name")
 tree.grid(column=0, row=5, columnspan=3)
+tree.bind("<Double-1>", select_project)
 
 window.mainloop()
