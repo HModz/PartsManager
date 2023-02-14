@@ -3,8 +3,13 @@ from tkinter import messagebox
 from tkinter import ttk
 
 import mysql.connector
+import pymysql
+from sqlalchemy import create_engine
+
 from customtkinter import *
 from customtkinter import CTk
+
+import pandas
 
 DB_PASSWORD = os.environ['mysql_db_password']
 
@@ -149,12 +154,11 @@ def select_project(event):
     id = selected_project["values"][0]
     project_name = selected_project["values"][1]
 
-
-
-
-
     parts_window = CTkToplevel()
     parts_window.title(f"{project_name}")
+
+    import_btn = CTkButton(master=parts_window, text="Import parts from BOM", command=import_parts)
+    import_btn.grid(column=0, row=1, pady=20)
 
     parts_tree = ttk.Treeview(parts_window, column=("c1", "c2", "c3", "c4", "c5", "c6", "c7"), show='headings')
     parts_tree.column("#1", anchor=tk.CENTER)
@@ -178,8 +182,10 @@ def select_project(event):
     parts_tree.column("#7", anchor=tk.CENTER)
     parts_tree.heading("#7", text="Status")
     parts_tree.grid(column=0, row=0)
-    parts_tree.focus_set()
-    parts_tree.grab_set()
+
+    parts_window.focus_set()
+    parts_window.grab_set()
+
     for i in parts_tree.get_children():
         parts_tree.delete(i)
     db = connect_to_db()
@@ -191,7 +197,29 @@ def select_project(event):
     for row in parts:
         parts_tree.insert("", tk.END, values=row)
     db.close()
+
     parts_tree.mainloop()
+
+def import_parts():
+    selected_project = get_selected_project()
+    id = selected_project["values"][0]
+    print(id)
+
+    db = create_engine(f'mysql+pymysql://root:{DB_PASSWORD}@localhost:3306/Neam', echo=False)
+
+    file_path = filedialog.askopenfilename()
+    data = pandas.read_excel(io=file_path, skiprows=3)
+    data.columns = data.iloc[0]
+    data = data[1:]
+    clean_data = data.drop(data.columns[[0,3,4,5,10,11,12]], axis=1)
+    clean_data.insert(0, 'project_id', id)
+    clean_data.rename(columns={'PART NAME': 'part_name', 'PART NUMBER / ORDER NUMBER': 'part_number',
+                               'QTY': 'qty', 'MANUFACTURER': 'manufacturer', 'PART TYPE': 'part_type',
+                               'TECHNOLOGY': 'technology', 'STATUS': 'status'}, inplace=True)
+    print(clean_data)
+
+    clean_data.to_sql(name="parts", con=db, if_exists="append", index=False, chunksize=100)
+
 
 
 window = CTk()
